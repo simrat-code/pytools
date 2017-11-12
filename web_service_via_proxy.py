@@ -3,7 +3,7 @@
 import httplib
 import sys
 import socket
-import os
+import optparse
 
 #proxy = 'http://192.168.56.1:3128'
 #os.environ['http_proxy'] = proxy
@@ -36,7 +36,21 @@ def WebService(address, port, resource):
 
 
 if __name__ == "__main__":
-    check = WebService('192.168.56.1', 3128, 'http://www.google.co.in')
+    parser = optparse.OptionParser()
+    parser.add_option("-a", "--address", dest = "address", default = "localhost",
+            help = "address for server|proxy", 
+            metavar = "ADDRESS")
+    parser.add_option("-p", "--port", dest="port", default=80,
+            help="port of webserver", 
+            metavar="PORT")
+    parser.add_option("-r", "--resource", dest="resource", default="/",
+            help="resource to GET",
+            metavar="RESOURCE")
+    (options, args) = parser.parse_args()
+
+    #check = WebService('192.168.56.1', 3128, 'http://www.google.co.in')
+    check = WebService(options.address, options.port, options.resource)
     print "[=] return status of WebService: %d" % check
     sys.exit(not check)
 # -- end --
+
