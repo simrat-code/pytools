@@ -1,0 +1,2 @@
+./check_webservice.py -a www.google.co.in -p 80 -r / -v
+./check_webservice.py -a myip.dnsdynamic.org -p 80 -r / 
