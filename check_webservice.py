@@ -11,34 +11,84 @@ import optparse
 #os.environ['https_proxy'] = proxy
 #os.environ['HTTPS_PROXY'] = proxy
 
-def WebService(address, port, resource, https_enable, print_enable):
+class WebService:
+#(address, port, resource, https_enable, print_enable):
     #if not resource.startswith('/'):
     #    resource = '/' + resource
+    def __init__(self, address, port, resource="/", https_enable=False, verbose=False):
+        self.address  = address
+        self.port     = port
+        self.resource = resource
+        self.https    = https_enable
+        self.verbose  = verbose
 
-    try:
-        if https_enable is True:
-            conn = httplib.HTTPSConnection(address, port, timeout=20)
-            print "[=] HTTPS connection created successfully"
+        self.conn = None
+
+        self.print_msg ("[=] addr -" + self.address + "-")
+        self.print_msg ("[=] port -" + str(self.port) + "-")
+        self.print_msg ("[=] rsrc -" + self.resource + "-")
+
+
+    def set_address(self, address):
+        self.address = address
+
+
+    def set_port(self, port):
+        self.port = port
+
+
+    def set_resource(self, resource):
+        self.resource = resource
+
+
+    def set_https(self, choice):
+        self.https = choice
+
+
+    def set_verbose(self, choice):
+        self.verbose = choice
+
+
+    def print_msg(self, msg):
+        if self.verbose is True:
+            print msg
+
+
+    def process(self):
+        try:
+            if self.https is True:
+                self.conn = httplib.HTTPSConnection(self.address, self.port, timeout=20)
+                self.print_msg("[=] HTTPS connection created successfully")
+            else:
+                self.conn = httplib.HTTPConnection(self.address, self.port, timeout=20)
+                self.print_msg( "[=] HTTP connection created successfully")
+            
+            req = self.conn.request('GET', self.resource)
+            self.print_msg( "[=] request for: " + self.resource)
+
+            response = self.conn.getresponse()
+            self.print_msg( "[=] response status: "+ str(response.status) +" :"+ response.reason)
+            self.print_msg ("[=] response string start:")
+            print response.read()
+            self.print_msg ("[=] response string end:")
+        except socket.error, e:
+            print "[=] HTTP connection failed: %s" % e
+            return False
+        except httplib.HTTPException, e:
+            print "[=] exception occured: %s " % e
+            return False
+        except:
+            print "[=] unbandled exception occured"
+            return False
+        finally:
+            if self.conn is not None:
+                self.print_msg ("[=] connection closed")
+                self.conn.close()
+    
+        if response.status in [200, 301]:
+            return True
         else:
-            conn = httplib.HTTPConnection(address, port, timeout=20)
-            print "[=] HTTP connection created successfully"
-        #conn.set_tunnel('192.168.56.1', 3128)
-        req = conn.request('GET', resource)
-        print "[=] request for: %s" % resource
-        response = conn.getresponse()
-        print "[=] response status: %s: %s" % (response.status, response.reason)
-        if print_enable is True:
-            print "[=] response string: \n%s" % response.read()
-    except socket.error, e:
-        print "[=] HTTP connection failed: %s" % e
-        return False
-    finally:
-        conn.close()
-
-    if response.status in [200, 301]:
-        return True
-    else:
-        return False
+            return False
 
 
 if __name__ == "__main__":
@@ -55,13 +105,19 @@ if __name__ == "__main__":
     parser.add_option("-s", "--ssl", dest="https", default=False, action="store_true", 
             help="enable HTTPS",
             metavar="HTTPS")
-    parser.add_option("-e", "--echo", dest="print_resp", default=False, action="store_true",
-            help="echo response to stdout")
+    parser.add_option("-v", "--verbose", dest="verbose", default=False, action="store_true",
+            help="verbose output")
     (options, args) = parser.parse_args()
 
+    if options.address == None or options.port == None:
+        print "some required options are not set: address/port"
+        parser.print_usage()
+        sys.exit(0)
+
     #check = WebService('192.168.56.1', 3128, 'http://www.google.co.in')
-    check = WebService(options.address, options.port, options.resource, options.https, options.print_resp)
-    print "[=] return status of WebService: %d" % check
+    ws = WebService(options.address, options.port, options.resource, options.https, options.verbose)
+    check = ws.process()
+    ws.print_msg( "[=] return status of WebService: " + str(check))
     sys.exit(not check)
 # -- end --
 
