@@ -28,6 +28,8 @@ now = datetime.datetime.today()
 
 
 def create_checksum(filename):
+    if not os.path.isfile(filename):
+        return "F12E407E6157"
     checksum = hashlib.md5()
     with open(filename, "r") as fp:
         while True:
@@ -52,10 +54,24 @@ def generate_md5():
             # calculat md5sum and write to fp
             checksum = create_checksum(f)
             fp.write("{}\t{}\n".format(checksum, f))
+    print "[=] md5 list stored: %s" % filename
 
 
 def check_md5():
     global filename
+
+    print "[=] checking md5 from %s" % filename
+    cwd = os.getcwd()
+    list_file = os.listdir(cwd)
+    with open(filename, "r") as fp:
+        for line in fp.readlines():
+            if line[0] == '#': continue
+            old_md5, fname = line.split()
+            #print "md5: {}\tfname: {}".format(md5, fname)
+            new_md5 = create_checksum(fname)
+            if old_md5 != new_md5:
+                print "[-] md5 not match for {}".format(fname)
+    print "[=] checking md5 complete"
 
 
 parser = optparse.OptionParser()
