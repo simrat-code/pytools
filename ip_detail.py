@@ -25,7 +25,8 @@ def fetch_private_ip():
 
 
 def fetch_public_ip():
-    cmd = ['/opt/pytools/check_webservice.py',
+    cmd = ['python',
+           '/opt/pytools/check_webservice.py',
            '-a', 'myip.dnsdynamic.org',
            '-p', '80',
            '-r', '/']
