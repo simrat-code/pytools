@@ -5,6 +5,9 @@
 # Date      : 08-May-2018
 #
 # About     : script is converted into python
+#             to user: create a bash file in ~/bin with 
+#             echo -e '#!/bin/bash \npython ${HOME}/bin/pytools/generate_md5.py' >${HOME}/bin/generate_md5.sh 
+#             chmod u+x ${HOME}/bin/generate_md5.sh
 
 
 # Filename  : generate_md5.sh
