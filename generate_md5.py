@@ -2,6 +2,13 @@
 
 # Filename  : generate_md5.py
 # Author    : Simrat Pal Singh
+# Date      : 06-Jan-2019
+# About     : optarg is replaced with argparse
+#             also 'if __main__' has been added
+
+
+# Filename  : generate_md5.py
+# Author    : Simrat Pal Singh
 # Date      : 08-May-2018
 #
 # About     : script is converted into python
@@ -20,7 +27,7 @@
 # args      : -g -> generate 
 #             -c -> check
 
-import optparse
+import argparse
 import datetime
 import os
 import hashlib
@@ -57,13 +64,13 @@ def generate_md5():
             # calculat md5sum and write to fp
             checksum = create_checksum(f)
             fp.write("{}\t{}\n".format(checksum, f))
-    print "[=] md5 list stored: %s" % filename
+    print("[=] md5 list stored: %s" % filename)
 
 
 def check_md5():
     global filename
 
-    print "[=] checking md5 from %s" % filename
+    print("[=] checking md5 from %s" % filename)
     cwd = os.getcwd()
     list_file = os.listdir(cwd)
     with open(filename, "r") as fp:
@@ -73,31 +80,26 @@ def check_md5():
             #print "md5: {}\tfname: {}".format(md5, fname)
             new_md5 = create_checksum(fname)
             if old_md5 != new_md5:
-                print "[-] md5 not match for {}".format(fname)
-    print "[=] checking md5 complete"
+                print("[-] md5 not match for {}".format(fname) )
+    print("[=] checking md5 complete")
 
 
-parser = optparse.OptionParser()
-parser.add_option('-g', '--generate', dest='generate',
-        default=False,
-        action='store_true',
-        help="generate md5sum file with name \'readme.md5\' in current folder. It contains all filenames along with their md5sum",
-        metavar='GENERATE')
-parser.add_option('-c', '--check', dest='check',
-        default=False,
-        action= 'store_true',
-        help="check the md5sum of each file against the stored in readme.md5 file",
-        metavar='CHECK')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-g', '--generate', 
+                        action='store_true',
+                        help='generate md5sum file with name \'readme.md5\' in current folder. It contains all filenames along with their md5sum')
+    parser.add_argument('-c', '--check',
+                        action='store_true',
+                        help='check the md5sum of each file against the stored in readme.md5 file')   
 
-(options, args) =  parser.parse_args()
+    args = parser.parse_args()                     
+    if (args.generate):
+        generate_md5()
+    elif (args.check):
+        check_md5()
+    else:
+        print("wrong option")
+        parser.print_help()
 
-    
-if options.generate:
-    generate_md5()
-elif options.check:
-    check_md5()
-else:
-    print "wrong option"
-    parser.print_help()
-
-
+# --end--
