@@ -5,12 +5,12 @@
 # Date      : 06-Jan-2019
 # About     : optarg is replaced with argparse
 #             also 'if __main__' has been added
+#             and python3
 
 
 # Filename  : generate_md5.py
 # Author    : Simrat Pal Singh
 # Date      : 08-May-2018
-#
 # About     : script is converted into python
 #             to user: create a bash file in ~/bin with 
 #             echo -e '#!/bin/bash \npython ${HOME}/bin/pytools/generate_md5.py' >${HOME}/bin/generate_md5.sh 
@@ -20,7 +20,6 @@
 # Filename  : generate_md5.sh
 # Author    : Simrat Pal Singh
 # Date      : 16-Aug-2016
-#
 # About     : It will generate md5sum of all files stored in current directory and
 #             and will save to 'readme.md5' file
 
@@ -33,7 +32,7 @@ import os
 import hashlib
 
 
-filename = "readme.md5"
+filename = "securehash.md5"
 now = datetime.datetime.today()
 
 
@@ -45,7 +44,7 @@ def create_checksum(filename):
         while True:
             buffer = fp.read(8192)
             if not buffer: break
-            checksum.update(buffer)
+            checksum.update(buffer.encode('utf-8'))
     checksum = checksum.hexdigest()
     return checksum
 
@@ -54,14 +53,19 @@ def generate_md5():
     global filename
     global now
 
-    os.remove(filename)
+    if os.path.isfile(filename): 
+        # remove the old secure-hash file
+        # before generating new file
+        # and by removing it, we exclude it from file-list
+        print('[=] removing old file: {}'.format(filename))
+        os.remove(filename)
     cwd = os.getcwd()
     list_file = os.listdir(cwd)
     with open(filename, "w") as fp:
         fp.write("# created on: {}\n".format(now))
         for f in list_file:
             if not os.path.isfile(f): continue
-            # calculat md5sum and write to fp
+            # calculate md5sum and write to fp
             checksum = create_checksum(f)
             fp.write("{}\t{}\n".format(checksum, f))
     print("[=] md5 list stored: %s" % filename)
@@ -71,8 +75,8 @@ def check_md5():
     global filename
 
     print("[=] checking md5 from %s" % filename)
-    cwd = os.getcwd()
-    list_file = os.listdir(cwd)
+    # cwd = os.getcwd()
+    # list_file = os.listdir(cwd)
     with open(filename, "r") as fp:
         for line in fp.readlines():
             if line[0] == '#': continue
