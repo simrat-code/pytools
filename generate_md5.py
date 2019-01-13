@@ -6,6 +6,8 @@
 # About     : optarg is replaced with argparse
 #             also 'if __main__' has been added
 #             and python3
+# Date      : 13-Jan-2019
+# About     : reading for file in binary mode to handle md5 for binary files
 
 
 # Filename  : generate_md5.py
@@ -39,12 +41,15 @@ now = datetime.datetime.today()
 def create_checksum(filename):
     if not os.path.isfile(filename):
         return "F12E407E6157"
+    print('[=] generating for file: {}'.format(filename))
     checksum = hashlib.md5()
-    with open(filename, "r") as fp:
+    
+    with open(filename, "rb") as fp:
         while True:
-            buffer = fp.read(8192)
+            buffer = fp.read(4096)
             if not buffer: break
-            checksum.update(buffer.encode('utf-8'))
+            #checksum.update(buffer.encode('utf-8'))
+            checksum.update(buffer)
     checksum = checksum.hexdigest()
     return checksum
 

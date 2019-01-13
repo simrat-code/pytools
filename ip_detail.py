@@ -41,6 +41,23 @@ def fetch_public_ip():
         return out
 
 
+def fetch_public_ip2():
+    cmd =  ['dig',
+            '@resolver1.opendns.com',
+            'myip.opendns.com',
+            'A',
+            '+short']
+    p1 = subprocess.Popen(cmd,
+                          stdout = subprocess.PIPE,
+                          stderr = subprocess.PIPE)
+    out, err = p1.communicate()
+
+    if not out:
+        return err
+    else:
+        return out
+
+
 if __name__ == "__main__":
     print "\n"
     print "---------------------------------------------------------------------------"
@@ -53,7 +70,8 @@ if __name__ == "__main__":
     print "---------------------------------------------------------------------------"
     print "Public IP detail:"
     print "---------------------------------------------------------------------------"
-    print fetch_public_ip()
+    #print fetch_public_ip()
+    print fetch_public_ip2()
     
 # -- end --        
 
