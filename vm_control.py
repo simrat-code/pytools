@@ -19,9 +19,6 @@ class VMS():
 
 
     def execute_vms(self, cmd, show_cmd=True, show_result=True):
-        # need to clear dict_vms as if False is return by this function
-        # other following depending function can attempt to use 'dict_vms'
-        self.dict_vms.clear()
         command = [self.base_cmd] + cmd
         if show_cmd:
             print("[=] executing: {}".format(command))
@@ -37,7 +34,7 @@ class VMS():
         else:
             self.status = out.decode('utf-8')
             if show_result:
-                print("[=] result: \n{}".format(self.status) )
+                print("[=] success: \n{}".format(self.status) )
             return True
 
 
@@ -58,12 +55,18 @@ class VMS():
         command = ["list", "vms"]
         if self.execute_vms(command, show_cmd=True, show_result=False):
             self.process_output(self.status)
+        else:
+            # this is error condition
+            self.dict_vms.clear()
 
 
     def list_running(self):
         command = ["list", "runningvms"]
         if self.execute_vms(command, show_cmd=True, show_result=False):
             self.process_output(self.status)
+        else:
+            # this is error condition
+            self.dict_vms.clear()
 
 
     def start_vms(self):
