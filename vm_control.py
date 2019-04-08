@@ -13,6 +13,11 @@ class VMS():
         self.status = ""
 
 
+    def clear_state(self):
+        self.dict_vms.clear()
+        self.status = ""
+
+
     def show_dict(self):
         for k, v in self.dict_vms.items():
             print("\t{}\t{}".format(k, v))
@@ -113,6 +118,16 @@ class VMS():
         self.execute_vms(cmd, show_cmd=True, show_result=True)
 
 
+    def restart_vm(self):
+        # show all currently running VMs
+        self.list_running()
+        choice = int(input("enter input <0 to exit>: "))
+        if choice == 0:
+            return
+        cmd = ['controlvm', self.dict_vms[choice], 'reset']
+        self.execute_vms(cmd, show_cmd=True, show_result=True)
+
+
 def ping_test():
     ip = input('enter IPv4: ')
     command = ['ping', '-n', '1', ip]
@@ -132,6 +147,7 @@ def display_menu():
     print("\t3\tstart vms")
     print("\t4\tsave all running vms")
     print('\t5\tsave vm')
+    print('\t6\trestart vm')
     print('\t0\texit')
 
 
@@ -150,6 +166,8 @@ if __name__ == "__main__":
             vms.save_all_running()
         elif choice == 5:
             vms.save_vm()
+        elif choice == 6:
+            vms.restart_vm()
         else:
             print("exiting...\n")
             break
