@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import httplib
+import http.client
 import sys
 import socket
 import optparse
@@ -51,16 +51,16 @@ class WebService:
 
     def print_msg(self, msg):
         if self.verbose is True:
-            print msg
+            print(msg)
 
 
     def process(self):
         try:
             if self.https is True:
-                self.conn = httplib.HTTPSConnection(self.address, self.port, timeout=20)
+                self.conn = http.client.HTTPSConnection(self.address, self.port, timeout=20)
                 self.print_msg("[=] HTTPS connection created successfully")
             else:
-                self.conn = httplib.HTTPConnection(self.address, self.port, timeout=20)
+                self.conn = http.client.HTTPConnection(self.address, self.port, timeout=20)
                 self.print_msg( "[=] HTTP connection created successfully")
             
             req = self.conn.request('GET', self.resource)
@@ -69,16 +69,16 @@ class WebService:
             response = self.conn.getresponse()
             self.print_msg( "[=] response status: "+ str(response.status) +" :"+ response.reason)
             self.print_msg ("[=] response string start:")
-            print response.read()
+            print(response.read())
             self.print_msg ("[=] response string end:")
-        except socket.error, e:
-            print "[=] HTTP connection failed: %s" % e
+        except socket.error as e:
+            print("[=] HTTP connection failed: %s" % e)
             return False
-        except httplib.HTTPException, e:
-            print "[=] exception occured: %s " % e
+        except http.client.HTTPException as e:
+            print("[=] exception occured: %s " % e)
             return False
         except:
-            print "[=] unbandled exception occured"
+            print("[=] unhandled exception occured")
             return False
         finally:
             if self.conn is not None:
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     if options.address == None or options.port == None:
-        print "some required options are not set: address/port"
+        print("some required options are not set: address/port")
         parser.print_usage()
         sys.exit(0)
 
