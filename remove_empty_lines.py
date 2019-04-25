@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -25,13 +25,13 @@ class FileWithEmptyLines:
 
 
     def print_filename(self):
-        print "in file : %s" % self.infile
-        print "out file: %s" % self.outfile
+        print("in file : %s" % self.infile)
+        print("out file: %s" % self.outfile)
 
 
     def remove_empty_lines(self):
         if not os.path.isfile(self.infile):
-            print "does not exist %s" % f
+            print("does not exist %s" % f)
             return
         fh_in = open(self.infile, "r")
         fh_out = open(self.outfile, 'w')
@@ -40,7 +40,7 @@ class FileWithEmptyLines:
             if line.rstrip() == "":
                 continue
             if self.verbose is True:
-                print "LINE: %s" % line,
+                print("LINE: %s" % line, end=' ')
             fh_out.writelines(line)
     
         fh_in.close()

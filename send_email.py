@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Default Ports:                   Server:         Authentication:     Port:
@@ -44,13 +44,13 @@ class EmailGmail:
         _s.message = text_list
 
     def send_email(_s, toaddr):
-        print "[=] sending email..."
+        print("[=] sending email...")
         if not _s.fromaddr or not _s.username or not _s.password or not _s.subject:
-            print "[=] some required parameter is not set"
+            print("[=] some required parameter is not set")
             return False
         if not _s.message:
             _s.message.append("[=] sending empty message")
-            print _s.message[0]
+            print(_s.message[0])
 
         _s.message.insert(0, "From: "+ _s.fromaddr)
         _s.message.insert(1, "To: "+ toaddr)
@@ -69,7 +69,7 @@ class EmailGmail:
         server.login(_s.username, _s.password)
         server.sendmail(_s.fromaddr, toaddr, msg)
         server.quit()
-        print "[=] email sending done"
+        print("[=] email sending done")
         return True
 
 # -- end --        
