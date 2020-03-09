@@ -21,53 +21,53 @@ import smtplib
 # ------------------------------------------------------------
 
 class EmailGmail:
-    def __init__(_s, fromaddr=None, username=None, password=None):
-        _s.fromaddr = fromaddr
-        _s.username = username
-        _s.password = password
-        _s.subject = ""
-        _s.message = []
+    def __init__(self, fromaddr=None, username=None, password=None):
+        self.fromaddr = fromaddr
+        self.username = username
+        self.password = password
+        self.subject = ""
+        self.message = []
 
-    def set_fromaddr(_s, text):
-        _s.fromaddr = text
+    def set_fromaddr(self, text):
+        self.fromaddr = text
 
-    def set_usename(_s, text):
-        _s.username = text
+    def set_usename(self, text):
+        self.username = text
 
-    def set_password(_s, text):
-        _s.password = text
+    def set_password(self, text):
+        self.password = text
 
-    def set_subject(_s, text):
-        _s.subject = text
+    def setselfubject(self, text):
+        self.subject = text
 
-    def set_body_message(_s, text_list):
-        _s.message = text_list
+    def set_body_message(self, text_list):
+        self.message = text_list
 
-    def send_email(_s, toaddr):
+    def send_email(self, toaddr):
         print("[=] sending email...")
-        if not _s.fromaddr or not _s.username or not _s.password or not _s.subject:
+        if not self.fromaddr or not self.username or not self.password or not self.subject:
             print("[=] some required parameter is not set")
             return False
-        if not _s.message:
-            _s.message.append("[=] sending empty message")
-            print(_s.message[0])
+        if not self.message:
+            self.message.append("[=] sending empty message")
+            print(self.message[0])
 
-        _s.message.insert(0, "From: "+ _s.fromaddr)
-        _s.message.insert(1, "To: "+ toaddr)
-        _s.message.insert(2, "Subject: "+ _s.subject)
-        _s.message.insert(3, " ")
-        msg = "\r\n".join(_s.message)
+        self.message.insert(0, "From: "+ self.fromaddr)
+        self.message.insert(1, "To: "+ toaddr)
+        self.message.insert(2, "Subject: "+ self.subject)
+        self.message.insert(3, " ")
+        msg = "\r\n".join(self.message)
         #
         # start sending email
         #
-        server = smtplib.SMTP_SSL('smtp.gmail.com:465')
+        server = smtplib.SMTPselfSL('smtp.gmail.com:465')
         server.ehlo()
         #
         # no server.starttls() as we are using
-        # SMTP_SSL function
+        # SMTPselfSL function
         #
-        server.login(_s.username, _s.password)
-        server.sendmail(_s.fromaddr, toaddr, msg)
+        server.login(self.username, self.password)
+        server.sendmail(self.fromaddr, toaddr, msg)
         server.quit()
         print("[=] email sending done")
         return True
