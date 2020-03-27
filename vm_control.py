@@ -17,10 +17,12 @@ class VMS():
         self.dict_vms.clear()
         self.status = ""
 
-
-    def show_dict(self):
+    #
+    # display VM name(s) on screen
+    #
+    def show_dict(self):        
         for k, v in self.dict_vms.items():
-            print("\t{}\t{}".format(k, v))
+            print("\t{}  {}".format(k, v))
 
 
     def execute_vms(self, cmd, show_cmd=True, show_result=True):
@@ -76,7 +78,7 @@ class VMS():
 
     def start_vms(self):
         self.list_all()
-        vm_list = input("start vms <enter '0' to exit>: ")
+        vm_list = input("start vms <enter '0' to back>: ")
         if vm_list[0] == '0':
             return
 
@@ -142,13 +144,13 @@ def ping_test():
  
 
 def display_menu():
-    print("\t1\tping test")
-    print("\t2\tshow running vms")
-    print("\t3\tstart vms")
-    print("\t4\tsave all running vms")
-    print('\t5\tsave vm')
-    print('\t6\trestart vm')
-    print('\t0\texit')
+    print("\t1  ping test")
+    print("\t2  show running vms")
+    print("\t3  start vms")
+    print("\t4  save all running vms")
+    print('\t5  save vm')
+    print('\t6  restart vm')
+    print('\t0  exit')
 
 
 if __name__ == "__main__":
