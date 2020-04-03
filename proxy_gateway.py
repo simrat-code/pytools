@@ -1,3 +1,8 @@
+#
+# Author    : Simrat Singh
+# Date      : Apr-2020
+#
+
 import socket
 import select
 import sys
@@ -5,7 +10,6 @@ import time
 import enum
 
 from simx_http.client_handler import clientHandlerThread
-# import simxHTTP.httpClient
 
 """
 https://null-byte.wonderhowto.com/how-to/sploit-make-proxy-server-python-0161232/
@@ -28,17 +32,7 @@ https://www.geeksforgeeks.org/creating-a-proxy-webserver-in-python-set-1/
 class ProxyType(enum.Enum):
     direct = 1
     proxy = 2
-
-
-def nextValueOf(text, src_list):
-    print(src_list)
-    x = len(src_list)
-    flag = 0
-    for i in range(x):
-        if (flag == 1): return src_list[i]
-        if (src_list[i] == text): flag = 1      # pattern found, now need to return the next value 
-    raise ValueError
-          
+        
 
 if __name__ == "__main__":
 
@@ -62,23 +56,22 @@ if __name__ == "__main__":
         while inputs:
             print("[=] waiting for new request")
             #
-            # need to implement select
+            # todo: need to implement select
+            # timeout field has been set as on Windows during select() prog
+            # do respond to Ctrl+C
+            # It is after timeout it accept 'pending' user interrupt
             #
             readable, writable, exceptional = select.select (inputs, outputs, inputs, 20)
             for s in readable:
                 if s is sock_server:
                     id = id + 1
                     print("[{:03d}] accepting new request".format(id))
-                    conn, addr = s.accept()
-                    conn.setblocking(True)
-                    # data = conn.recv(buf_size)
-                    # if (data == "exit" or data == "quit"):
-                    #     break
+                    sock_client, addr = s.accept()
 
-                    # start new thread
-                    # clientThread(id, conn, addr, data.decode("utf-8")).start()
-                    clientHandlerThread(id, conn, addr).start()
-                    # print("[=] {} thread started".format(id))
+                    #
+                    # starting a new thread
+                    #
+                    clientHandlerThread(id, sock_client, addr).start()
 
     except KeyboardInterrupt as e:
         print("[=] user interrupt")
@@ -90,5 +83,5 @@ if __name__ == "__main__":
     finally:
         if (sock_server):
             sock_server.close()
-            print("[=] socket closed")
+            print("[=] server socket closed")
 # --end--
