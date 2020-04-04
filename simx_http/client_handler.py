@@ -48,11 +48,7 @@ class clientHandlerThread(threading.Thread):
 
 
     def run(self):        
-        #
-        # to avoid WinError 10035: 
-        # "A non-blocking socket operation could not be completed immediately"
-        # which occurs during conn.recv() call
-        #
+        
         self.conn.setblocking(False)
 
         if not self.data:
@@ -60,7 +56,7 @@ class clientHandlerThread(threading.Thread):
             data = self.conn.recv(8192)
             self.data = data.decode("utf-8")
 
-        # print("[{0:03d}] recv data ----------[ {0} ]\n==>{1}<==\n".format(self.thread_id, self.data))
+        print("[{0:03d}] recv data ----------[ {0} ]\n==>{1}<==\n".format(self.thread_id, self.data))
         try:
             self._processRequest()
            
@@ -72,12 +68,13 @@ class clientHandlerThread(threading.Thread):
             print("[{:03d}] exception occurs 03: {}".format(self.thread_id, e))            
         finally:
             if (self.conn): 
-                print("[{:03d}] closing client connection".format(self.thread_id) )
+                # print("[{:03d}] closing client connection".format(self.thread_id) )
+                print("[{0:03d}] closing client connection ----------------[ {0:d} ]".format(self.thread_id))
                 self.conn.close()
                 
 
     def _processRequest(self):
-        # ============ Sample Request Format =======================================================
+        # ============ Sample Request Format for HTTPS==============================================
         # CONNECT null-byte.wonderhowto.com:443 HTTP/1.1
         # User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0
         # Proxy-Connection: keep-alive
@@ -87,20 +84,26 @@ class clientHandlerThread(threading.Thread):
 
         # self.conn.send(self.static_resp.encode("utf-8"))
         
-        webserver = ""
-        port = -1
-        protocol = ""
-
         #
         # Fetching webserver address and port from 
         # the very first line of request        
         #
         first_line = self.data.split('\n')[0]
 
+        # check for HTTP Method in client request
+        header_list = first_line.split(' ')
+        if (header_list[0] not in ["GET", "POST", "CONNECT"]):
+            print("[{:03d}] invalid HTTP method: {}".format(self.thread_id, header_list[0]) )
+            return
+
         #
         # item at index 1 of first-line is the webserver/website/target server address
         #
-        url = first_line.split(' ')[1]
+        url = header_list[1]
+
+        webserver = ""
+        port = -1
+        protocol = ""
 
         temp_index = url.find("://")
         if (temp_index != -1):
@@ -136,32 +139,123 @@ class clientHandlerThread(threading.Thread):
         # pass self.data ie original request to it
         # and send back the response to client
         #
-        self.targetHTTPServer(webserver, port)
-        # self.proxyServer("10.144.1.11", 8080)
+        print("[{:03d}] connecting: server => {} : {}".format(self.thread_id, webserver, str(port)) )
+        if (header_list[0] in ["GET", "POST"]):
+            self.targetHTTPServer(webserver, port)
+        elif (header_list[0] == "CONNECT"):
+            self.targetSSLServer(webserver, port)
+        else:
+            print("[{:03d}] ALERT!!! this statement should never execute!!!".format(self.thread_id))
+            return
 
 
     def targetHTTPServer(self, webserver, port):
-        print("[{:03d}] connecting: server => {} : {}".format(self.thread_id, webserver, str(port)) )
         try:
             sock_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock_web.setblocking(False)
             sock_web.connect((webserver, port))
+            #
+            # to avoid WinError 10035: 
+            # "A non-blocking socket operation could not be completed immediately"
+            # which occurs during conn.recv() call
+            # so setting blocking to True
+            #
+            sock_web.setblocking(True)
             sock_web.sendall(str.encode(self.data))
 
             while True:
-                ready = select.select([sock_web], [], [], 5)
-                if ready[0]:                
-                    reply = sock_web.recv(4096)
-                    if (len(reply) > 0):
-                        self.conn.send(reply)
-                        dar = float(len(reply))
-                        dar = float(dar / 1024)
-                        dar = "%.3s" % (str(dar))
-                        dar = "%s KB" % (dar)
-                        print("[{:03d}] request done: {} => {} <=".format(self.thread_id, str(self.addr[0]), str(dar)) )
+                # ready = select.select([sock_web], [], [], 5)
+                # if ready[0]:                
+                reply = sock_web.recv(4096)
+                if (len(reply) > 0):
+                    self.conn.send(reply)
+                    dar = float(len(reply))
+                    dar = float(dar / 1024)
+                    dar = "%.3s" % (str(dar))
+                    dar = "%s KB" % (dar)
+                    print("[{:03d}] request done: {} => {} <=".format(self.thread_id, str(self.addr[0]), str(dar)) )
+                else:
+                    # print("[{0:03d}] recv complete, breaking the loop -----[ {0:d} ]".format(self.thread_id))
+                    break
+        except socket.error as e:
+            print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
+        # except:
+        #     print("[{:03d}] exception occurs: unknown exception".format(self.thread_id))
+        finally:
+            print("[{:03d}] closing webserver socket".format(self.thread_id))
+            sock_web.close()
+
+    
+    def targetSSLServer(self, webserver, port):
+        #
+        # https://www.ietf.org/rfc/rfc2817.txt
+        # Page 5: HTTP upgrade to TLS
+        #
+        # Any successful (2xx) response to a CONNECT request indicates that the
+        # proxy has established a connection to the requested host and port,
+        # and has switched to tunneling the current connection to that server
+        # connection.
+        #
+        # A proxy MUST NOT respond with any 2xx status code
+        # unless it has either a direct or tunnel connection established to the
+        # authority.
+        #
+        proxy_resp = "HTTP/1.1 200 Connection established\nProxy-Agent: THE Simx ProxyGateway\n\n"
+        try:
+            sock_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #
+            # to avoid WinError 10035: 
+            # "A non-blocking socket operation could not be completed immediately"
+            # which occurs during conn.recv() call
+            # so setting blocking to True
+            #
+            sock_web.setblocking(True)
+
+            sock_web.connect((webserver, port))
+            # sock_web.sendall(str.encode(self.data))
+
+            #
+            # since connection with server is successful
+            # Proxy should send the 2xx reply to client.
+            #
+            self.conn.sendall(proxy_resp.encode("utf-8") )
+
+            #
+            # now need to start the loop for handing over request-reponse
+            # between client and server via proxy
+            #
+
+            while True:
+                ready = select.select([sock_web, self.conn], [], [], 5)
+                if ready[0]:
+                    sock_recv = None
+                    sock_send = None
+
+                    if ready[0] is self.conn:
+                        #
+                        # data from client is received by proxy
+                        # read from self.conn.recv()
+                        # 
+                        sock_recv = self.conn
+                        sock_send = sock_web
                     else:
-                        print("[{0:03d}] recv complete, breaking the loop -----[ {0:d} ]".format(self.thread_id))
-                        break
+                        #
+                        # data from server is received by proxy
+                        # read from sock_web.recv()
+                        #                 
+                        sock_recv = sock_web
+                        sock_send = self.conn
+
+                    while True:    
+                        reply = sock_recv.recv(4096)
+                        if (len(reply) > 0):
+                            sock_send.send(reply)
+                            # dar = float(len(reply))
+                            # dar = float(dar / 1024)
+                            # dar = "%.3s" % (str(dar))
+                            # dar = "%s KB" % (dar)
+                            # print("[{:03d}] request done: {} => {} <=".format(self.thread_id, str(self.addr[0]), str(dar)) )
+                        else:
+                            break
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
         # except:
