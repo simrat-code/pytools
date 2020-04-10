@@ -51,7 +51,7 @@ class clientHandlerThread(threading.Thread):
     def run(self):        
         
         # self.conn.setblocking(False) # working for HTTP but error with SSL
-        # self.conn.setblocking(True)
+        self.conn.setblocking(True)
 
         if not self.data:
             print("[=] receiving data!!!")
@@ -185,7 +185,8 @@ class clientHandlerThread(threading.Thread):
                             dar = "%s KB" % (dar)
                             print("[{:03d}] request done: {} => {} <=".format(self.thread_id, str(self.addr[0]), str(dar)) )
                         else:
-                            break
+                            s.shutdown(socket.SHUT_RD)
+
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
         # except:
@@ -212,17 +213,18 @@ class clientHandlerThread(threading.Thread):
         proxy_resp = "HTTP/1.1 200 Connection established\nProxy-Agent: THE Simx ProxyGateway\n\n"
         try:
             sock_web = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_web.connect((webserver, port))
             #
             # to avoid WinError 10035: 
             # "A non-blocking socket operation could not be completed immediately"
             # which occurs during conn.recv() call
             # so setting blocking to True
             #
-            sock_web.setblocking(True)
-            self.conn.setblocking(True)
+            # using select() as solution to this issue
+            #
+            sock_web.setblocking(False)
+            self.conn.setblocking(False)
 
-            sock_web.connect((webserver, port))
-            # reply = sock_web.recv(4096)
             # print("[{:03d}] client socket: {}".format(self.thread_id, self.conn))
             # print("[{:03d}] web+++ socket: {}".format(self.thread_id, sock_web))
 
@@ -236,55 +238,58 @@ class clientHandlerThread(threading.Thread):
             # now need to start the loop for handing over request-reponse
             # between client and server via proxy
             #
-            counter = 0
+            inputs = [sock_web, self.conn]
+            outputs = []
             while True:
-                counter = counter + 1
-                if (counter > 20): break
-                ready = select.select([sock_web, self.conn], [], [], 5)
+                # ready = select.select(inputs, outputs, inputs, 8) # WHY FAILS WITH THIS
+                ready = select.select([sock_web, self.conn], [], [], 8)
+                if (not ready[0] and not ready[1] and not ready[2]): break
                 for s in ready[0]:
                     sock_recv = None
                     sock_send = None
 
-                    # if ready[0] is self.conn:
                     if s is self.conn:
                         #
                         # data from client is received by proxy
                         # read from self.conn.recv()
                         # 
-                        print("[{:03d}] client --> webserver".format(self.thread_id))
+                        print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
                         sock_recv = self.conn
                         sock_send = sock_web
-                    # elif ready[0] is sock_web:
+                    
                     elif s is sock_web:
                         #
                         # data from server is received by proxy
                         # read from sock_web.recv()
                         #                 
-                        print("[{:03d}] client <-- webserver".format(self.thread_id))
+                        print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
                         sock_recv = sock_web
                         sock_send = self.conn
+
                     else:
-                        print("[{:03d}] xxxxxxxx data from none side sleep(1) xxxxxxxx {}".format(self.thread_id, ready[0]))
+                        print("[{:03d}] xxxxxxxx data from none side xxxxxxxx {}".format(self.thread_id, ready[0]))
                         time.sleep(1)
-                        counter = counter + 99
-                        continue
+                        break
 
                     #
                     # normal send-recv between client and webserver
-                    # here relying on recv() to read complete data
-                    # since, both sockets are blocking
                     #
                     reply = sock_recv.recv(4096)
-                    print("[{:03d}] receive {} bytes".format(self.thread_id, len(reply) ) )
-                    sock_send.sendall(reply)
+                    if (len(reply) > 0):
+                        dar = float(len(reply))
+                        dar = float(dar / 1024)
+                        dar = "%.3s" % (str(dar))
+                        dar = "%s KB" % (dar)
+                        print("=> {} <=".format(dar))
+                        sock_send.sendall(reply)                 
+                    else:
+                        #
+                        # sock_recv is done with sending data and no data will ever receive on this socket
+                        #
+                        print("^_^")
+                        sock_recv.shutdown(socket.SHUT_RD)
+                        inputs.remove(sock_recv)
 
-                    # while True:                        
-                    #     reply = sock_recv.recv(4096)
-                    #     print("[{:03d}] receive {} bytes".format(self.thread_id, len(reply) ) )
-                    #     if (len(reply) > 0):
-                    #         sock_send.sendall(reply)
-                    #     else:
-                    #         break
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
         # except:
