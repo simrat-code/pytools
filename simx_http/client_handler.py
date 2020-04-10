@@ -171,11 +171,9 @@ class clientHandlerThread(threading.Thread):
             sock_web.setblocking(False)
             sock_web.sendall(str.encode(self.data))
 
-            count = 0
             while True:
-                if count > 6: break
-                count = count + 1
-                ready = select.select([sock_web], [], [], 5)
+                ready = select.select([sock_web], [], [], 8)
+                if (not ready[0] and not ready[1] and not ready[2]): break
                 for s in ready[0]:
                     if s is sock_web:                
                         reply = sock_web.recv(4096)
