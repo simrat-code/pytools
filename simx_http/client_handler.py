@@ -58,7 +58,7 @@ class clientHandlerThread(threading.Thread):
             data = self.conn.recv(8192)
             self.data = data.decode("utf-8")
 
-        print("[{0:03d}] recv data ----------[ {0} ]\n==>{1}<==\n".format(self.thread_id, self.data))
+        # print("[{0:03d}] recv data ----------[ {0} ]\n==>{1}<==\n".format(self.thread_id, self.data))
         try:
             self._processRequest()
            
@@ -70,7 +70,6 @@ class clientHandlerThread(threading.Thread):
             print("[{:03d}] exception occurs 03: {}".format(self.thread_id, e))            
         finally:
             if (self.conn): 
-                # print("[{:03d}] closing client connection".format(self.thread_id) )
                 print("[{0:03d}] closing client connection ----------------[ {0:d} ]".format(self.thread_id))
                 self.conn.close()
                 
@@ -172,7 +171,10 @@ class clientHandlerThread(threading.Thread):
             sock_web.setblocking(False)
             sock_web.sendall(str.encode(self.data))
 
+            count = 0
             while True:
+                if count > 6: break
+                count = count + 1
                 ready = select.select([sock_web], [], [], 5)
                 for s in ready[0]:
                     if s is sock_web:                
