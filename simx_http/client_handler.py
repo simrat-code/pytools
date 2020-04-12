@@ -72,6 +72,14 @@ class clientHandlerThread(threading.Thread):
             if (self.conn): 
                 print("[{0:03d}] closing client connection ----------------[ {0:d} ]".format(self.thread_id))
                 self.conn.close()
+    
+
+    def dataRateKB(self, reply):        
+        dar = float(len(reply))
+        dar = float(dar / 1024)
+        dar = "%.3s" % (str(dar))
+        dar = "%s KB" % (dar)
+        return dar
                 
 
     def _processRequest(self):
@@ -171,21 +179,29 @@ class clientHandlerThread(threading.Thread):
             sock_web.setblocking(False)
             sock_web.sendall(str.encode(self.data))
 
+            inputs = [sock_web, self.conn]
+            outputs = []
             while True:
-                ready = select.select([sock_web], [], [], 8)
-                if (not ready[0] and not ready[1] and not ready[2]): break
+                if not inputs: break
+                ready = select.select(inputs, outputs, inputs, 8)
+
+                if (not ready[0] and not ready[1] and not ready[2]): break  # select timeout
                 for s in ready[0]:
-                    if s is sock_web:                
-                        reply = sock_web.recv(4096)
-                        if (len(reply) > 0):
-                            self.conn.send(reply)
-                            dar = float(len(reply))
-                            dar = float(dar / 1024)
-                            dar = "%.3s" % (str(dar))
-                            dar = "%s KB" % (dar)
-                            print("[{:03d}] request done: {} => {} <=".format(self.thread_id, str(self.addr[0]), str(dar)) )
-                        else:
-                            s.shutdown(socket.SHUT_RD)
+                    sock_recv = None
+                    sock_send = None
+
+                    if s is sock_web:
+                        print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
+                        sock_recv = sock_web
+                        sock_send = self.conn
+                    elif s is self.conn:
+                        print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
+                        sock_recv = self.conn
+                        sock_send = sock_web
+                    else:
+                        break
+
+                    inputs = self.logicRecvSend(inputs, sock_recv, sock_send)
 
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
@@ -241,27 +257,20 @@ class clientHandlerThread(threading.Thread):
             inputs = [sock_web, self.conn]
             outputs = []
             while True:
-                # ready = select.select(inputs, outputs, inputs, 8) # WHY FAILS WITH THIS
-                ready = select.select([sock_web, self.conn], [], [], 8)
-                if (not ready[0] and not ready[1] and not ready[2]): break
+                if not inputs: break
+                ready = select.select(inputs, outputs, inputs, 8) 
+
+                if (not ready[0] and not ready[1] and not ready[2]): break  # select timeout
                 for s in ready[0]:
                     sock_recv = None
                     sock_send = None
 
                     if s is self.conn:
-                        #
-                        # data from client is received by proxy
-                        # read from self.conn.recv()
-                        # 
                         print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
                         sock_recv = self.conn
                         sock_send = sock_web
                     
                     elif s is sock_web:
-                        #
-                        # data from server is received by proxy
-                        # read from sock_web.recv()
-                        #                 
                         print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
                         sock_recv = sock_web
                         sock_send = self.conn
@@ -271,24 +280,7 @@ class clientHandlerThread(threading.Thread):
                         time.sleep(1)
                         break
 
-                    #
-                    # normal send-recv between client and webserver
-                    #
-                    reply = sock_recv.recv(4096)
-                    if (len(reply) > 0):
-                        dar = float(len(reply))
-                        dar = float(dar / 1024)
-                        dar = "%.3s" % (str(dar))
-                        dar = "%s KB" % (dar)
-                        print("=> {} <=".format(dar))
-                        sock_send.sendall(reply)                 
-                    else:
-                        #
-                        # sock_recv is done with sending data and no data will ever receive on this socket
-                        #
-                        print("^_^")
-                        sock_recv.shutdown(socket.SHUT_RD)
-                        inputs.remove(sock_recv)
+                    inputs = self.logicRecvSend(inputs, sock_recv, sock_send)
 
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
@@ -297,3 +289,23 @@ class clientHandlerThread(threading.Thread):
         finally:
             print("[{:03d}] closing webserver socket".format(self.thread_id))
             sock_web.close()
+
+
+    def logicRecvSend(self, inputs, sock_recv, sock_send):
+        reply = sock_recv.recv(4096)
+        if (len(reply) > 0):
+            print("=> {} <=".format(self.dataRateKB(reply)))
+            sock_send.sendall(reply)                 
+        else:
+            #
+            # sock_recv is done with sending data and no data will ever receive on this socket
+            #
+            print("^_^")
+            sock_recv.shutdown(socket.SHUT_RD)
+            inputs.remove(sock_recv)
+        #
+        # if all inputs socket-descriptos are SHUT_RD
+        # no need to call select(), instead exit from loop
+        #
+        # if not inputs: raise MyException
+        return inputs
