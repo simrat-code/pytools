@@ -181,27 +181,8 @@ class clientHandlerThread(threading.Thread):
 
             inputs = [sock_web, self.conn]
             outputs = []
-            while True:
-                if not inputs: break
-                ready = select.select(inputs, outputs, inputs, 8)
-
-                if (not ready[0] and not ready[1] and not ready[2]): break  # select timeout
-                for s in ready[0]:
-                    sock_recv = None
-                    sock_send = None
-
-                    if s is sock_web:
-                        print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
-                        sock_recv = sock_web
-                        sock_send = self.conn
-                    elif s is self.conn:
-                        print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
-                        sock_recv = self.conn
-                        sock_send = sock_web
-                    else:
-                        break
-
-                    inputs = self.logicRecvSend(inputs, sock_recv, sock_send)
+            
+            self._superWhile(inputs, outputs, self.conn, sock_web, 3)
 
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
@@ -256,32 +237,9 @@ class clientHandlerThread(threading.Thread):
             #
             inputs = [sock_web, self.conn]
             outputs = []
-            while True:
-                if not inputs: break
-                ready = select.select(inputs, outputs, inputs, 8) 
 
-                if (not ready[0] and not ready[1] and not ready[2]): break  # select timeout
-                for s in ready[0]:
-                    sock_recv = None
-                    sock_send = None
-
-                    if s is self.conn:
-                        print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
-                        sock_recv = self.conn
-                        sock_send = sock_web
-                    
-                    elif s is sock_web:
-                        print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
-                        sock_recv = sock_web
-                        sock_send = self.conn
-
-                    else:
-                        print("[{:03d}] xxxxxxxx data from none side xxxxxxxx {}".format(self.thread_id, ready[0]))
-                        time.sleep(1)
-                        break
-
-                    inputs = self.logicRecvSend(inputs, sock_recv, sock_send)
-
+            self._superWhile(inputs, outputs, self.conn, sock_web, 8)
+           
         except socket.error as e:
             print("[{:03d}] exception occurs: {}".format(self.thread_id, e))
         # except:
@@ -289,23 +247,53 @@ class clientHandlerThread(threading.Thread):
         finally:
             print("[{:03d}] closing webserver socket".format(self.thread_id))
             sock_web.close()
+    
 
+    def _superWhile(self, inputs, outputs, sock_client, sock_web, timeout=8):
+        #
+        # NOTE: any exception raised here will/should be caught in calling function
+        #
+        while True:
+            ready = select.select(inputs, outputs, inputs, timeout) 
 
-    def logicRecvSend(self, inputs, sock_recv, sock_send):
-        reply = sock_recv.recv(4096)
-        if (len(reply) > 0):
-            print("=> {} <=".format(self.dataRateKB(reply)))
-            sock_send.sendall(reply)                 
-        else:
-            #
-            # sock_recv is done with sending data and no data will ever receive on this socket
-            #
-            print("^_^")
-            sock_recv.shutdown(socket.SHUT_RD)
-            inputs.remove(sock_recv)
-        #
-        # if all inputs socket-descriptos are SHUT_RD
-        # no need to call select(), instead exit from loop
-        #
-        # if not inputs: raise MyException
-        return inputs
+            if (not ready[0] and not ready[1] and not ready[2]): break  # select timeout
+            for s in ready[0]:
+                sock_recv = None
+                sock_send = None
+
+                if s is sock_client:
+                    print("[{:03d}] client --> webserver ".format(self.thread_id), end='')
+                    sock_recv = sock_client
+                    sock_send = sock_web
+                
+                elif s is sock_web:
+                    print("[{:03d}] client <-- webserver ".format(self.thread_id), end='')
+                    sock_recv = sock_web
+                    sock_send = sock_client
+
+                else:
+                    print("[{:03d}] xxxxxxxx data from none side xxxxxxxx {}".format(self.thread_id, ready[0]))
+                    time.sleep(1)
+                    break
+
+                # inputs = self.logicRecvSend(inputs, sock_recv, sock_send)
+                reply = sock_recv.recv(4096)
+                if (len(reply) > 0):
+                    print("=> {} <=".format(self.dataRateKB(reply)))
+                    sock_send.sendall(reply)                 
+                else:
+                    #
+                    # sock_recv is done with sending data and no data will ever receive on this socket
+                    #
+                    print("^_^")
+                    sock_recv.shutdown(socket.SHUT_RD)
+                    inputs.remove(sock_recv)
+
+            if not inputs: 
+                #
+                # if all inputs socket-descriptos are SHUT_RD
+                # no need to call select(), instead exit from while-loop
+                #
+                break
+        return
+
