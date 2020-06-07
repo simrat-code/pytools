@@ -33,7 +33,7 @@ def execute_command(cmd):
     try:
         show_command(cmd)
     except TypeError:
-        print("expect List, but provided {}".format(type(cmd)))
+        print("[X] expect List, but provided {}".format(type(cmd)))
         return
 
     p = subprocess.Popen(cmd,
@@ -58,7 +58,10 @@ def separator():
 
 if __name__ == "__main__":
     for c in cmd_list:
-        separator()
-        execute_command(c)
+        try:
+            separator()
+            execute_command(c)
+        except FileNotFoundError as e:
+            print("[X] Exception: {}".format(e))
 
 
