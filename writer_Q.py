@@ -1,7 +1,9 @@
 import ctypes
+import time
+
 from ctypes import wintypes
 from threading import Thread
-import time
+from threading import Event
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
 
@@ -131,31 +133,50 @@ def MenuDance():
     EnterKey(VK_ESCAPE)
 
 class ThreadKeystrokes(Thread):
-    def __init__(self, delay, func):
+    '''Thread to imitate keyboard-strokes to main thread
+    after specified time-delay in sec.
+    It will call the func() which correspond to keys pattern.
+    '''
+    def __init__(self, delay, func, stop_event, exit_event):
         Thread.__init__(self)
         self.delay = delay
         self.func = func
+        self.event = stop_event
+        self.exit = exit_event
         
     def run(self):
-        while True:
-            time.sleep(self.delay)
-            self.func()
+        try:
+            counter = 0
+            while not self.event.is_set():
+                time.sleep(1)
+                counter += 1
+                if counter >= self.delay: 
+                    # reset counter
+                    counter = 0
+                    self.func()                    
+        finally:
+            self.exit.set()
             
+
 if __name__ == "__main__":
-    #ks = ThreadKeystrokes(10, InputKey_X)
-    ks = ThreadKeystrokes(60, InputKey_Question)
-    #ks = ThreadKeystrokes(10, MenuDance) # :( something not right
-    ks.daemon = True
+    stop_event = Event()
+    exit_event = Event()
+
+    ks = ThreadKeystrokes(60, InputKey_Question, stop_event, exit_event)
     ks.start()
 
-    count = 0
-    while True:
-        count = count + 1
-
-        #print('{:04} press Ctrl+C to exit'.format(count))
-        #time.sleep(5)
-        
-        print('{:04} press Ctrl+C to exit <y/n>: '.format(count), end='')
-        val = input()
+    try:
+        count = 0
+        while True:
+            count += 1            
+            print('{:04} press Ctrl+C to exit <y/n>: '.format(count), end='')
+            val = input()
+    except KeyboardInterrupt:
+        print("\n[=] user interrupt caught, exiting...")
+    finally:
+        stop_event.set()
+        print("waiting for threads to exit")
+        exit_event.wait()
+        ks.join()
     
 # --END--
