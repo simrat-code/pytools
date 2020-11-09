@@ -2,13 +2,19 @@
 # control the VBox virtual machines from command line
 #
 import subprocess
+import sys
 
 
 class VMS():   
 
     def __init__(self):  
-        self.base_cmd = 'C:/Program Files/Oracle/VirtualBox/VBoxManage.exe'
-        # self.cur_vms = []
+        if sys.platform.startswith('win'):
+            self.base_cmd = 'C:/Program Files/Oracle/VirtualBox/VBoxManage.exe'
+        elif sys.platform.startswith('linux'):
+            self.base_cmd = '/usr/bin/vboxmanage'
+        else:
+            print('unable to determine platform')
+            raise 'unknown'
         self.dict_vms = {}
         self.status = ""
 
