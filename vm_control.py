@@ -7,14 +7,18 @@ import sys
 
 class VMS():   
 
-    def __init__(self):  
+    def __init__(self):
+        print("\t" + "="*28)
         if sys.platform.startswith('win'):
             self.base_cmd = 'C:/Program Files/Oracle/VirtualBox/VBoxManage.exe'
+            print("\t== vm-control for Windows ==")
         elif sys.platform.startswith('linux'):
             self.base_cmd = '/usr/bin/vboxmanage'
+            print("\t==  vm-control for Linux  ==")
         else:
             print('unable to determine platform')
             raise 'unknown'
+        print("\t" + "="*28)
         self.dict_vms = {}
         self.status = ""
 
@@ -84,7 +88,7 @@ class VMS():
 
     def start_vms(self):
         self.list_all()
-        vm_list = input("start vms <enter '0' to back>: ")
+        vm_list = input("start vms <0 go back>: ")
         if vm_list[0] == '0':
             return
 
@@ -138,15 +142,8 @@ class VMS():
 
 def ping_test():
     ip = input('enter IPv4: ')
-    command = ['ping', '-n', '1', ip]
-    p1 = subprocess.Popen(command,
-                            stderr = subprocess.STDOUT,
-                            stdout = subprocess.PIPE)
-    (out, err) = p1.communicate()
-    if out:
-        print(out.decode('utf-8'))
-    else:
-        print(err.decode('utf-8'))
+    command = ['ping', '-n', '6', ip]
+    subprocess.run(command, stderr = sys.stdout, stdout = sys.stdout)    
  
 
 def display_menu():
