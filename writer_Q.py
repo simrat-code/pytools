@@ -151,12 +151,25 @@ class ThreadKeystrokes(Thread):
                 time.sleep(1)
                 counter += 1
                 if counter >= self.delay: 
-                    # reset counter
                     counter = 0
-                    self.func()                    
+                    self.func()
+                # elif counter % 9 == 0:
+                #     print('.', end='', flush=True)
         finally:
             self.exit.set()
             
+
+def mygenerator():
+    c = 0
+    while True:
+        c = 1 if c == 1440 else c + 1
+        yield c
+
+
+def func(x):
+    if (x == 'n') or (x == 'N') or (x == 'Y'): x = 'y'
+    return x
+
 
 if __name__ == "__main__":
     stop_event = Event()
@@ -164,13 +177,19 @@ if __name__ == "__main__":
 
     ks = ThreadKeystrokes(60, InputKey_Question, stop_event, exit_event)
     ks.start()
+    count = mygenerator()
 
     try:
-        count = 0
-        while True:
-            count += 1            
-            print('{:04} press Ctrl+C to exit <y/n>: '.format(count), end='')
-            val = input()
+        # count = 0
+        # while True:
+        #     count += 1            
+        #     s = f'{count:04} press Ctrl+C to exit <y/n>: '
+        #     val = input(s)
+
+        # replacing while-loop with function-prog style
+        funcFP = lambda: func(input(f'{next(count):04} to exit Ctrl+C/y/n: ')) == 'y' \
+            or funcFP()
+        funcFP()
     except KeyboardInterrupt:
         print("\n[=] user interrupt caught, exiting...")
     finally:
