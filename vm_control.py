@@ -140,9 +140,19 @@ class VMS():
         self.execute_vms(cmd, show_cmd=True, show_result=True)
 
 
-def ping_test():
-    ip = input('enter IPv4: ')
-    command = ['ping', '-n', '6', ip]
+def getIPv4(ip):
+    ipdefault = ['192', '168', '56', '1']
+    # make sure 'ip' don't start with '.'
+    # if it does then remove leading '.'
+    ip = ip if ip[0] != '.' else ip[1:]
+    # since there are at most '3' dots in IPv4
+    return '.'.join( [ ipdefault[x] for x in range(0, 3 - ip.count('.')) ] ) +'.'+ ip
+    
+
+def ping_test(num = 6):        
+    ip = getIPv4( input('enter IPv4: ') )
+    print(f'sending {num} ping packets')
+    command = ['ping', '-n', num, ip]
     subprocess.run(command, stderr = sys.stdout, stdout = sys.stdout)    
  
 
