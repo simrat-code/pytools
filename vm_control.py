@@ -141,19 +141,34 @@ class VMS():
 
 
 def getIPv4(ip):
-    ipdefault = ['192', '168', '56', '1']
+    ipdefault = ['192', '168', '56', 'x']
     # make sure 'ip' don't start with '.'
     # if it does then remove leading '.'
-    ip = ip if ip[0] != '.' else ip[1:]
+    if (len(ip) == 0):
+        # if no IPv4 provided, then ping default gw
+        # for-loop inside join (at return call) will do 192, 168, 56 and append ip ie '1'
+        # which will make it '192.168.56.1' ie default gw for vbox installation.
+        ip = '1'
+    else:
+        ip = ip if ip[0] != '.' else ip[1:]
     # since there are at most '3' dots in IPv4
-    return '.'.join( [ ipdefault[x] for x in range(0, 3 - ip.count('.')) ] ) +'.'+ ip
+    return '.'.join( [ ipdefault[x] for x in range(0, 3 - ip.count('.')) ] + [ip] )
     
 
-def ping_test(num = 6):        
+def ping_test(num = 6):
+    # valid inputs will be with or without leading '.'
+    # [[[192.]168.]56.]40
+    # 40 or .40               will become 192.168.56.40
+    # 50.40 or .50.40         will become 192.168.50.40
+    # 100.56.40 or .100.56.40 will become 192.100.56.40
+    # 172.100.21.40           will become 172.100.21.40
+
+    # getIPv4 will return ip as string
     ip = getIPv4( input('enter IPv4: ') )
     print(f'sending {num} ping packets')
-    command = ['ping', '-n', num, ip]
-    subprocess.run(command, stderr = sys.stdout, stdout = sys.stdout)    
+    command = ['ping', '-n', str(num), ip]
+    print(command)
+    subprocess.run(command, stderr = sys.stdout, stdout = sys.stdout)
  
 
 def display_menu():
