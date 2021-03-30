@@ -65,7 +65,7 @@ if __name__ == "__main__":
     print('\n[=] following keys are added:')
     showKey()
     if args.pull:
-        if input("continue <y/n>: ") in ['y','Y']:
+        if input("[git pull] continue <y/n>: ") in ['y','Y']:
             list(map(gitPull, git_repo))
         else:
             print('exiting...')
