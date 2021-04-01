@@ -35,18 +35,21 @@ def runCommand(cmd, path):
             stderr = sys.stdout)
 
 def gitPull(path):
-    print('-' * 37)
+    printSep()
     print("[=] git pull ->", path.rpartition('/')[2])
     runCommand(cmd_pull, path)
 
 def gitStatus(path):
-    print('-' * 37)
+    printSep()
     print("[=] git status ->", path.rpartition('/')[2])
     runCommand(cmd_status, path)
 
 def showKey():
     print('\n[=] following keys are added:')
     subprocess.run(cmd_add, stdout = sys.stdout, stderr = sys.stdout)
+
+def printSep():
+    print('-' * 37)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -67,11 +70,12 @@ if __name__ == "__main__":
         showKey()
         if input("[git pull] continue <y/n>: ") in ['y','Y']:
             list(map(gitPull, git_repo))
+            printSep()
         else:
             print('exiting...')
     elif args.status:
         list(map(gitStatus, git_repo))
-        print('-' * 37)
+        printSep()
     elif args.show:
         showKey()
         print("\n".join(git_repo))
