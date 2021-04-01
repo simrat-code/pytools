@@ -45,6 +45,7 @@ def gitStatus(path):
     runCommand(cmd_status, path)
 
 def showKey():
+    print('\n[=] following keys are added:')
     subprocess.run(cmd_add, stdout = sys.stdout, stderr = sys.stdout)
 
 if __name__ == "__main__":
@@ -62,16 +63,17 @@ if __name__ == "__main__":
 
     loadRepoPath()
 
-    print('\n[=] following keys are added:')
-    showKey()
     if args.pull:
+        showKey()
         if input("[git pull] continue <y/n>: ") in ['y','Y']:
             list(map(gitPull, git_repo))
         else:
             print('exiting...')
     elif args.status:
         list(map(gitStatus, git_repo))
+        print('-' * 37)
     elif args.show:
+        showKey()
         print("\n".join(git_repo))
 
 # 0xAA55
