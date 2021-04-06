@@ -11,9 +11,11 @@ class VMS():
         print("\t" + "="*28)
         if sys.platform.startswith('win'):
             self.base_cmd = 'C:/Program Files/Oracle/VirtualBox/VBoxManage.exe'
+            self.pingopt = "-n"
             print("\t== vm-control for Windows ==")
         elif sys.platform.startswith('linux'):
             self.base_cmd = '/usr/bin/vboxmanage'
+            self.pingopt = "-c"
             print("\t==  vm-control for Linux  ==")
         else:
             print('unable to determine platform')
@@ -22,6 +24,8 @@ class VMS():
         self.dict_vms = {}
         self.status = ""
 
+    def getPingOpt(self):
+        return self.pingopt
 
     def clear_state(self):
         self.dict_vms.clear()
@@ -155,7 +159,7 @@ def getIPv4(ip):
     return '.'.join( [ ipdefault[x] for x in range(0, 3 - ip.count('.')) ] + [ip] )
     
 
-def ping_test(num = 6):
+def ping_test(pingopt, num = 6):
     # valid inputs will be with or without leading '.'
     # [[[192.]168.]56.]40
     # 40 or .40               will become 192.168.56.40
@@ -166,7 +170,7 @@ def ping_test(num = 6):
     # getIPv4 will return ip as string
     ip = getIPv4( input('enter IPv4: ') )
     print(f'sending {num} ping packets')
-    command = ['ping', '-n', str(num), ip]
+    command = ['ping', pingopt, str(num), ip]
     print(command)
     subprocess.run(command, stderr = sys.stdout, stdout = sys.stdout)
  
@@ -187,7 +191,7 @@ if __name__ == "__main__":
         display_menu()
         choice = int(input("enter input: "))
         if choice == 1:
-            ping_test()
+            ping_test(vms.getPingOpt())
         elif choice == 2:
             vms.list_running()
         elif choice == 3:
