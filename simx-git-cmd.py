@@ -8,7 +8,7 @@ import os
 
 cmd_add = ['ssh-add','-l']
 cmd_pull = ['git', 'pull']
-cmd_status = ['git', 'status']
+cmd_status = ['git', 'status', '-s']
 
 git_repo = []
 
