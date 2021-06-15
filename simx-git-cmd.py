@@ -27,7 +27,7 @@ def loadRepoPath():
             if line[0] == '#': continue
             git_repo.append(line)
 
-def runCommand(cmd, path):
+def runCommand(cmd, path="."):
     subprocess.run(cmd,
             cwd = path,
             timeout = 10,
@@ -46,7 +46,7 @@ def gitStatus(path):
 
 def showKey():
     print('\n[=] following keys are added:')
-    subprocess.run(cmd_add, stdout = sys.stdout, stderr = sys.stdout)
+    runCommand(cmd_add)
 
 def printSep():
     print('-' * 37)
@@ -79,5 +79,7 @@ if __name__ == "__main__":
     elif args.show:
         showKey()
         print("\n".join(git_repo))
+    else:
+        parser.print_help()
 
 # 0xAA55
