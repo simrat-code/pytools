@@ -36,16 +36,16 @@ class HTMLHandler:
         #
         # parsing arguments
         #
+        if (not fname or not inpath):
+            print("[-] error: invalid number of arguments")
+            raise ValueError
         print("[=] inpath/fname: {}{}".format(inpath, fname))
         ##long_string = self.read_sample()
         #
         # replace {filename}
         #
-        long_string = self.start.replace("{filename}", fname)
-
-        if (not fname or not inpath):
-            print("[-] error: invalid number of arguments")
-            raise ValueError
+        # long_string = self.start.replace("{filename}", fname)
+        long_string = self.start.format(**{"filename": fname})
     
         outfile = self.outpath + fname + ".html"
         infile = inpath + fname + ".txt"
@@ -87,6 +87,7 @@ class HTMLHandler:
 
 
     def _decodeLine(self, line):
+        """Insert html tags by replacing text symbols """
         # check if line need to be decoded
         if (line.find("<pre>") != -1):
             self.pre_flag = True
