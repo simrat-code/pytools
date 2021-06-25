@@ -74,6 +74,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     loadRepoPath()
+    longest = max([len(r) for r in git_repo])
 
     if args.pull:
         showKey()
@@ -90,14 +91,14 @@ if __name__ == "__main__":
             # ask which repo to push
             printSep()
             for i, s in enumerate(git_repo):
-                print(f"\t{i} : {s}")
+                print(f"\t{i} : {s:{longest}} : {i}")
             printSep()
             try:
                 choice = int(input("[=] repo-id to PUSH -> master: "))
                 gitPush(git_repo[choice])
                 printSep()
             except:
-                print("[=] operation skipped")
+                print("[x] operation skipped")
         else:
             print('exiting...')
     
