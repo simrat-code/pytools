@@ -82,19 +82,33 @@ if __name__ == "__main__":
             printSep()
         else:
             print('exiting...')
+    
     elif args.push:
         showKey()
         if input("[git push -> master] continue <y/n>: ") in ['y','Y']:
-            list(map(gitPush, git_repo))
+            # list(map(gitPush, git_repo))
+            # ask which repo to push
             printSep()
+            for i, s in enumerate(git_repo):
+                print(f"\t{i} : {s}")
+            printSep()
+            try:
+                choice = int(input("[=] repo-id to PUSH -> master: "))
+                gitPush(git_repo[choice])
+                printSep()
+            except:
+                print("[=] operation skipped")
         else:
             print('exiting...')
+    
     elif args.status:
         list(map(gitStatus, git_repo))
         printSep()
+    
     elif args.show:
         showKey()
         print("\n".join(git_repo))
+    
     else:
         parser.print_help()
 
