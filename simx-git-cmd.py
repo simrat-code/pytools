@@ -6,9 +6,10 @@ import argparse
 import sys
 import os
 
-cmd_add = ['ssh-add','-l']
+cmd_listkey = ['ssh-add','-l']
 cmd_pull = ['git', 'pull']
 cmd_status = ['git', 'status', '-s']
+cmd_push = ['git', 'push']
 
 git_repo = []
 
@@ -39,6 +40,11 @@ def gitPull(path):
     print("[=] git pull ->", path.rpartition('/')[2])
     runCommand(cmd_pull, path)
 
+def gitPush(path):
+    printSep()
+    print("[=] git push ->", path.rpartition('/')[2])
+    runCommand(cmd_push, path)
+
 def gitStatus(path):
     printSep()
     print("[=] git status ->", path.rpartition('/')[2])
@@ -46,7 +52,7 @@ def gitStatus(path):
 
 def showKey():
     print('\n[=] following keys are added:')
-    runCommand(cmd_add)
+    runCommand(cmd_listkey)
 
 def printSep():
     print('-' * 37)
@@ -62,14 +68,24 @@ if __name__ == "__main__":
     parser.add_argument("--show",
             action = "store_true",
             help="show local repo paths")
+    parser.add_argument("--push",
+            action = "store_true",
+            help="push local changes to master")
     args = parser.parse_args()
 
     loadRepoPath()
 
     if args.pull:
         showKey()
-        if input("[git pull] continue <y/n>: ") in ['y','Y']:
+        if input("[git pull <- master] continue <y/n>: ") in ['y','Y']:
             list(map(gitPull, git_repo))
+            printSep()
+        else:
+            print('exiting...')
+    elif args.push:
+        showKey()
+        if input("[git push -> master] continue <y/n>: ") in ['y','Y']:
+            list(map(gitPush, git_repo))
             printSep()
         else:
             print('exiting...')
