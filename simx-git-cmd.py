@@ -45,6 +45,16 @@ def gitPush(path):
     print("[=] git push ->", path.rpartition('/')[2])
     runCommand(cmd_push, path)
 
+def gitPush2(path):
+    '''pass path or index for git_repo list'''
+    if isinstance(path, int):
+        # since path is passed as index
+        # fetch the actual path from list
+        path = git_repo[path]
+    printSep()
+    print("[=] git push ->", path.rpartition('/')[2])
+    runCommand(cmd_push, path)
+
 def gitStatus(path):
     printSep()
     print("[=] git status ->", path.rpartition('/')[2])
@@ -87,18 +97,19 @@ if __name__ == "__main__":
     elif args.push:
         showKey()
         if input("[git push -> master] continue <y/n>: ") in ['y','Y']:
-            # list(map(gitPush, git_repo))
-            # ask which repo to push
-            printSep()
-            for i, s in enumerate(git_repo):
-                print(f"\t{i} : {s:{longest}} : {i}")
-            printSep()
-            try:
-                choice = int(input("[=] repo-id to PUSH -> master: "))
-                gitPush(git_repo[choice])
-                printSep()
-            except:
-                print("[x] operation skipped")
+            # # list(map(gitPush, git_repo))
+            # # ask which repo to push
+            # printSep()
+            # for i, s in enumerate(git_repo):
+            #     print(f"\t{i} : {s:{longest}} : {i}")
+            # printSep()
+            # try:
+            #     choices = list(map(int, input("[=] repo-ids to PUSH -> master: ").split() ))
+            #     list( map(gitPush, choices) )
+            #     printSep()
+            # except:
+            #     print("[x] operation skipped")
+            list(map(gitPush, git_repo))
         else:
             print('exiting...')
     
