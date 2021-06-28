@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# or you can use 'sed' command 
+# sed '/^$/d' infile.txt > outfile.txt
 
 import os
 import sys
@@ -31,7 +33,7 @@ class FileWithEmptyLines:
 
     def remove_empty_lines(self):
         if not os.path.isfile(self.infile):
-            print("does not exist %s" % f)
+            print("File not exist: %s" % self.infile)
             return
         fh_in = open(self.infile, "r")
         fh_out = open(self.outfile, 'w')
@@ -39,7 +41,7 @@ class FileWithEmptyLines:
         for line in fh_in.readlines():
             if line.rstrip() == "":
                 continue
-            if self.verbose is True:
+            if self.verbose:
                 print("LINE: %s" % line, end=' ')
             fh_out.writelines(line)
     
