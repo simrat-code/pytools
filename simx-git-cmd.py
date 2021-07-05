@@ -29,15 +29,19 @@ def loadRepoPath():
             git_repo.append(line)
 
 def runCommand(cmd, path="."):
-    subprocess.run(cmd,
-            cwd = path,
-            timeout = 10,
-            stdout = sys.stdout,
-            stderr = sys.stdout)
+    try:
+        subprocess.run(cmd,
+                cwd = path,
+                timeout = 10,
+                stdout = sys.stdout,
+                stderr = sys.stdout)
+    except subprocess.TimeoutExpired as e:
+        print(f"[x] Exception occured: {e}")
+        print("[x] skipping " + "#"*24)
 
 def gitPull(path):
     printSep()
-    print("[=] git pull ->", path.rpartition('/')[2])
+    print("[=] git pull <-", path.rpartition('/')[2])
     runCommand(cmd_pull, path)
 
 def gitPush(path):
