@@ -21,6 +21,10 @@ class VMS():
             print('unable to determine platform')
             raise 'unknown'
         print("\t" + "="*28)
+
+        # hold all the created VMs in VBox or
+        # the current running VMs
+        # it will repopulated based on user choice
         self.dict_vms = {}
         self.status = ""
 
@@ -90,6 +94,17 @@ class VMS():
             self.dict_vms.clear()
 
 
+    def get_choices(self, all=False):
+        self.list_all() if all else self.list_running()
+        
+        # validates the choices enter
+        # it will ignore any invalid choice
+        nokeys = len(self.dict_vms.keys())
+        text = "enter input <0 to exit>: "
+        choices = list(int(v) for v in input(text).split() if int(v) <= nokeys )
+        return choices if 0 not in choices else []
+
+
     def start_vms(self):
         self.list_all()
         vm_list = input("start vms <0 go back>: ")
@@ -113,25 +128,10 @@ class VMS():
             self.execute_vms(cmd)
 
 
-    def save_all_running(self):
-        # populate the dict with current running vms
-        self.list_running()
-        if not self.dict_vms:
-            return
-        for i, vms in self.dict_vms.items():
-            print("[{}] saving: {}".format(i, vms))
-            cmd = ["controlvm", vms, "savestate"]
-            self.execute_vms(cmd)
-
-
-    def save_vm(self):
-        # show all currently running VMs
-        self.list_running()
-        choice = int(input("enter input <0 to exit>: "))
-        if choice == 0:
-            return
-        cmd = ['controlvm', self.dict_vms[choice], 'savestate']
-        self.execute_vms(cmd, show_cmd=True, show_result=True)
+    def save_vms(self):
+        for i in self.get_choices(all=False):
+            cmd = ['controlvm', self.dict_vms[i], 'savestate']
+            self.execute_vms(cmd, show_cmd=True, show_result=True)
 
 
     def restart_vm(self):
@@ -179,8 +179,8 @@ def display_menu():
     print("\t1  ping test")
     print("\t2  show running vms")
     print("\t3  start vms")
-    print("\t4  save all running vms")
-    print('\t5  save vm')
+    print("\t4  --empty--")
+    print('\t5  save vms')
     print('\t6  restart vm')
     print('\t0  exit')
 
@@ -197,9 +197,10 @@ if __name__ == "__main__":
         elif choice == 3:
             vms.start_vms()
         elif choice == 4:
-            vms.save_all_running()
+            pass
+            #vms.save_all_running()
         elif choice == 5:
-            vms.save_vm()
+            vms.save_vms()
         elif choice == 6:
             vms.restart_vm()
         else:
