@@ -105,15 +105,9 @@ class VMS():
         return choices if 0 not in choices else []
 
 
-    def start_vms(self):
-        self.list_all()
-        vm_list = input("start vms <0 go back>: ")
-        if vm_list[0] == '0':
-            return
-
-        for i in vm_list.split(' '):
-            num = int(i)
-            vms = self.dict_vms[num]
+    def start_vm(self):
+        for i in self.get_choices(all=True):
+            vms = self.dict_vms[i]
             choice = input("start \"{}\" headless <y/n> [y]: ".format(vms))
             print("starting {}".format(vms))
 
@@ -128,20 +122,16 @@ class VMS():
             self.execute_vms(cmd)
 
 
-    def save_vms(self):
+    def save_vm(self):
         for i in self.get_choices(all=False):
             cmd = ['controlvm', self.dict_vms[i], 'savestate']
             self.execute_vms(cmd, show_cmd=True, show_result=True)
 
 
     def restart_vm(self):
-        # show all currently running VMs
-        self.list_running()
-        choice = int(input("enter input <0 to exit>: "))
-        if choice == 0:
-            return
-        cmd = ['controlvm', self.dict_vms[choice], 'reset']
-        self.execute_vms(cmd, show_cmd=True, show_result=True)
+        for i in self.get_choices(all=False):
+            cmd = ['controlvm', self.dict_vms[i], 'reset']
+            self.execute_vms(cmd, show_cmd=True, show_result=True)
 
 
 def getIPv4(ip):
@@ -195,12 +185,12 @@ if __name__ == "__main__":
         elif choice == 2:
             vms.list_running()
         elif choice == 3:
-            vms.start_vms()
+            vms.start_vm()
         elif choice == 4:
             pass
             #vms.save_all_running()
         elif choice == 5:
-            vms.save_vms()
+            vms.save_vm()
         elif choice == 6:
             vms.restart_vm()
         else:
