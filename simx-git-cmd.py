@@ -7,9 +7,9 @@ import sys
 import os
 
 cmd_listkey = ['ssh-add','-l']
-cmd_pull = ['git', 'pull']
-cmd_status = ['git', 'status', '-s']
-cmd_push = ['git', 'push']
+cmd_pull    = ['git', 'pull']
+cmd_status  = ['git', 'status', '-s']
+cmd_push    = ['git', 'push']
 
 git_repo = []
 
@@ -32,7 +32,7 @@ def runCommand(cmd, path="."):
     try:
         subprocess.run(cmd,
                 cwd = path,
-                timeout = 10,
+                timeout = 20,
                 stdout = sys.stdout,
                 stderr = sys.stdout)
     except subprocess.TimeoutExpired as e:
