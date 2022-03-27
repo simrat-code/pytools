@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # control the VBox virtual machines from command line
 #
