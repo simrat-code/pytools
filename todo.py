@@ -26,7 +26,7 @@ def save_tasks(lines):
 
 class TodoApp:
     def __init__(self):
-        self.header = urwid.Text(" TODO Manager — q: quit, a: add, f: filter, s: save, space: toggle")
+        self.header = urwid.Text(" TODO Manager — q: quit, a: add, e: edit, f: filter, s: save, space: toggle")
         self.tasks = []
         self.category_filter = None
         self.dirty = False
@@ -124,6 +124,43 @@ class TodoApp:
         fill = urwid.Filler(pile)
         self.loop.widget = urwid.Overlay(fill, self.frame, 'center', ('relative', 50), 'middle', ('relative', 30))
 
+    def edit_selected_task(self):
+        # focus_widget, pos = self.listbox.get_focus() # deprecated
+        # body = self.listbox.body
+        focus_widget = self.listbox.focus
+        pos = self.listbox.focus_position
+
+        if focus_widget is None:
+            return
+
+        index = pos
+        status, category, task_date, description = self.parse_task(self.tasks[index])
+
+        category_edit = urwid.Edit("Category: ", edit_text=category)
+        description_edit = urwid.Edit("Description: ", edit_text=description)
+        error = urwid.Text("")
+
+        def on_save(button):
+            new_cat = category_edit.edit_text.strip()
+            new_desc = description_edit.edit_text.strip()
+
+            if new_cat not in CATEGORIES:
+                error.set_text(f"Invalid category. Choose: {', '.join(CATEGORIES)}")
+                return
+
+            new_line = f"[{'x' if status else ' '}] [{new_cat}] {task_date} {new_desc}"
+            self.tasks[index] = new_line
+            self.dirty = True
+            self.loop.widget = self.frame
+            self.refresh()
+
+        save_btn = urwid.Button("Save", on_press=on_save)
+        cancel_btn = urwid.Button("Cancel", on_press=lambda btn: setattr(self.loop, "widget", self.frame))
+
+        pile = urwid.Pile([category_edit, description_edit, error, urwid.Columns([save_btn, cancel_btn])])
+        overlay = urwid.Overlay(urwid.LineBox(pile), self.frame, 'center', ('relative', 50), 'middle', ('relative', 30))
+        self.loop.widget = overlay
+
     def filter_popup(self):
         def on_select(button, cat):
             self.category_filter = cat if cat != "All" else None
@@ -147,7 +184,7 @@ class TodoApp:
         cancel_btn = urwid.Button("Cancel", on_press=lambda btn: setattr(self.loop, "widget", self.frame))
 
         pile = urwid.Pile([
-            urwid.Text("You have unsaved changes. Save before quitting?"),
+            urwid.Text("You have unsaved changes.\nSave before quitting?"),
             urwid.Columns([save_btn, discard_btn, cancel_btn], dividechars=2)
         ])
         overlay = urwid.Overlay(urwid.LineBox(pile), self.frame, 'center', 40, 'middle', 7)
@@ -163,6 +200,9 @@ class TodoApp:
 
         elif key == 'a':
             self.add_task_popup()
+        
+        elif key == 'e':
+            self.edit_selected_task()
 
         elif key == 'f':
             self.filter_popup()
