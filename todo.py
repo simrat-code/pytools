@@ -20,17 +20,19 @@ def load_tasks():
     return TODO_FILE.read_text().strip().splitlines()
 
 def save_tasks(lines):
+    _logger.info(f"writing to file {len(lines)} tasks")
     lines.sort(key=lambda x: "[x]" in x)  # Sort tasks with done tasks at the end
     TODO_FILE.write_text("\n".join(lines) + "\n")
 
 class TodoApp:
     def __init__(self):
-        self.header = urwid.Text(" TODO Manager — q to quit, a to add, f to filter, space to toggle")
+        self.header = urwid.Text(" TODO Manager — q: quit, a: add, f: filter, s: save, space: toggle")
         self.tasks = []
         self.category_filter = None
+        self.dirty = False
         self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([]))
         self.frame = urwid.Frame(header=urwid.AttrWrap(self.header, 'header'), body=self.listbox)
-        self.refresh()
+        self.refresh(reload=True)
         self.loop = urwid.MainLoop(self.frame, palette=[('header', 'black', 'light gray')],
                                    unhandled_input=self.unhandled_input)
 
@@ -67,8 +69,9 @@ class TodoApp:
         urwid.connect_signal(chk, name='change', callback=self.on_toggle, user_args=[i])
         return chk
 
-    def refresh(self):
-        self.tasks = load_tasks()
+    def refresh(self, reload=False):
+        if reload:
+            self.tasks = load_tasks()
         self.tasks.sort(key=lambda x: "[x]" in x)
 
         widgets = []
@@ -85,7 +88,8 @@ class TodoApp:
             self.tasks[index] = line.replace("[ ]", "[x]", 1)
         else:
             self.tasks[index] = line.replace("[x]", "[ ]", 1)
-        save_tasks(self.tasks)
+        # save_tasks(self.tasks)
+        self.dirty = True
         self.refresh()
 
     def add_task_popup(self):
@@ -99,7 +103,8 @@ class TodoApp:
             today = date.today().isoformat()
             formatted = f"[ ] [{cat}] {today} {txt}"
             self.tasks.append(formatted)
-            save_tasks(self.tasks)
+            # save_tasks(self.tasks)
+            self.dirty = True
             self.loop.widget = self.frame
             self.refresh()
 
@@ -131,16 +136,43 @@ class TodoApp:
         overlay = urwid.Overlay(urwid.LineBox(menu), self.frame, 'center', 20, 'middle', 10)
         self.loop.widget = overlay
 
+    def confirm_exit(self):
+        def on_choice(button, choice):
+            if choice == "Save":
+                save_tasks(self.tasks)
+            raise urwid.ExitMainLoop()
+
+        save_btn = urwid.Button("Save", on_press=on_choice, user_data="Save")
+        discard_btn = urwid.Button("Discard", on_press=on_choice, user_data="Discard")
+        cancel_btn = urwid.Button("Cancel", on_press=lambda btn: setattr(self.loop, "widget", self.frame))
+
+        pile = urwid.Pile([
+            urwid.Text("You have unsaved changes. Save before quitting?"),
+            urwid.Columns([save_btn, discard_btn, cancel_btn], dividechars=2)
+        ])
+        overlay = urwid.Overlay(urwid.LineBox(pile), self.frame, 'center', 40, 'middle', 7)
+        self.loop.widget = overlay
+
     def unhandled_input(self, key):
         if key in ('q', 'Q'):
-            save_tasks(self.tasks)
-            raise urwid.ExitMainLoop()
+            if self.dirty:
+                self.confirm_exit()
+                # save_tasks(self.tasks)
+            else:
+                raise urwid.ExitMainLoop()
+
         elif key == 'a':
             self.add_task_popup()
+
         elif key == 'f':
             self.filter_popup()
+        
         elif key == 'r':
             self.refresh()
+        
+        elif key == 's':
+            save_tasks(self.tasks)
+            self.dirty = False
 
     def run(self):
         self.loop.run()
