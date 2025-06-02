@@ -33,8 +33,12 @@ class TodoApp:
         self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([]))
         self.frame = urwid.Frame(header=urwid.AttrWrap(self.header, 'header'), body=self.listbox)
         self.refresh(reload=True)
-        self.loop = urwid.MainLoop(self.frame, palette=[('header', 'black', 'light gray')],
-                                   unhandled_input=self.unhandled_input)
+        self.loop = urwid.MainLoop(
+            self.frame, 
+            palette=[('header', 'black', 'light gray')],
+            unhandled_input=self.unhandled_input,
+            handle_mouse=False
+        )
 
     def parse_task(self, line):
         #
