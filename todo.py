@@ -27,18 +27,29 @@ def save_tasks(lines):
 class TodoApp:
     def __init__(self):
         self.header = urwid.Text(" TODO Manager — q: quit, a: add, e: edit, f: filter, s: save, space: toggle")
+        self.footer = urwid.Text("")
         self.tasks = []
         self.category_filter = None
         self.dirty = False
         self.listbox = urwid.ListBox(urwid.SimpleFocusListWalker([]))
-        self.frame = urwid.Frame(header=urwid.AttrWrap(self.header, 'header'), body=self.listbox)
+        self.frame = urwid.Frame(
+            header=urwid.AttrWrap(self.header, 'header'), 
+            body=self.listbox,
+            footer=self.footer
+        )
         self.refresh(reload=True)
         self.loop = urwid.MainLoop(
             self.frame, 
-            palette=[('header', 'black', 'light gray')],
+            palette=[
+                ('header', 'black', 'light gray'),
+                ('footer', 'dark gray', 'black'),
+            ],
             unhandled_input=self.unhandled_input,
             handle_mouse=False
         )
+
+    def set_footer(self, text):
+        self.footer.set_text(text)
 
     def parse_task(self, line):
         #
@@ -94,6 +105,7 @@ class TodoApp:
             self.tasks[index] = line.replace("[x]", "[ ]", 1)
         # save_tasks(self.tasks)
         self.dirty = True
+        self.set_footer(f"unsaved changes, press 's' to save.")
         self.refresh()
 
     def add_task_popup(self):
@@ -109,6 +121,7 @@ class TodoApp:
             self.tasks.append(formatted)
             # save_tasks(self.tasks)
             self.dirty = True
+            self.set_footer(f"unsaved changes, press 's' to save.")
             self.loop.widget = self.frame
             self.refresh()
 
@@ -155,6 +168,7 @@ class TodoApp:
             new_line = f"[{'x' if status else ' '}] [{new_cat}] {task_date} {new_desc}"
             self.tasks[index] = new_line
             self.dirty = True
+            self.set_footer(f"unsaved changes, press 's' to save.")
             self.loop.widget = self.frame
             self.refresh()
 
@@ -181,6 +195,7 @@ class TodoApp:
         def on_choice(button, choice):
             if choice == "Save":
                 save_tasks(self.tasks)
+                self.set_footer(f"tasks saved")
             raise urwid.ExitMainLoop()
 
         save_btn = urwid.Button("Save", on_press=on_choice, user_data="Save")
@@ -216,6 +231,7 @@ class TodoApp:
         
         elif key == 's':
             save_tasks(self.tasks)
+            self.set_footer(f"tasks saved")
             self.dirty = False
 
     def run(self):
