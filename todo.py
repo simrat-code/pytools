@@ -184,6 +184,10 @@ class TodoApp:
             self.category_filter = cat if cat != "All" else None
             self.loop.widget = self.frame
             self.refresh()
+            if self.category_filter:
+                self.set_footer(f"Filtering by: {self.category_filter}")
+            else:
+                self.set_footer("")
 
         buttons = [urwid.Button("All", on_press=on_select, user_data="All")]
         buttons += [urwid.Button(cat, on_press=on_select, user_data=cat) for cat in sorted(CATEGORIES)]
