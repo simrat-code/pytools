@@ -135,11 +135,12 @@ class TodoApp:
             cat_buttons.append(btn)
 
         task_edit = urwid.Edit("Task: ")
-        # category_edit = urwid.Edit("Category: ")
         error = urwid.Text("")
-        pile = urwid.Pile(cat_buttons + [task_edit, error, urwid.Button("Add", on_press=on_submit)])
+        submit_btn = urwid.Button("Add", on_press=on_submit)
+        cancel_btn = urwid.Button("Cancel", on_press=lambda btn: setattr(self.loop, "widget", self.frame))
+        pile = urwid.Pile(cat_buttons + [task_edit, error, urwid.Columns([submit_btn, cancel_btn])])
         fill = urwid.Filler(pile)
-        self.loop.widget = urwid.Overlay(fill, self.frame, 'center', ('relative', 50), 'middle', ('relative', 30))
+        self.loop.widget = urwid.Overlay(urwid.LineBox(pile), self.frame, 'center', ('relative', 50), 'middle', ('relative', 30))
 
     def edit_selected_task(self):
         # focus_widget, pos = self.listbox.get_focus() # deprecated
